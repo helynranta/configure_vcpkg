@@ -1,0 +1,75 @@
+name: 'configure vcpkg'
+description: 'vcpkg configuration'
+inputs:
+  PAT:
+    description: 'personal access token for accessing private repos'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/checkout@v3
+      name: pull vcpkg
+      with:
+        repository: 'microsoft/vcpkg'
+        ref: '2022.10.19'
+        path: 'vcpkg'
+
+    - name: cache vcpkg downloads.
+      uses: pat-s/always-upload-cache@v3.0.1
+      with:
+        path: |
+          ${{ github.workspace }}/vcpkg/downloads
+        key: ${{ matrix.os }}-vcpkg-downloads
+    
+    - uses: ilammy/msvc-dev-cmd@v1
+      if: ${{ matrix.os == 'windows-latest' }}
+      name: setup msvc command prompt
+
+    - uses: lukka/get-cmake@latest
+      name: get latest cmake version
+
+    - uses: lerppana/git-credential-approve@v1
+      name: setup credentials for private vcpkg registry
+      with:
+        personal-access-token: ${{ inputs.PAT }}
+        path: 'lerppana/vcpkg-registry'
+
+    - name: bootstrap vcpkg
+      shell: pwsh
+      run: |
+        ${{ github.workspace }}/vcpkg/bootstrap-vcpkg.bat -disableMetrics
+
+    - name: 'setup nuget credentials'
+      shell: 'bash'
+      run: >
+        ${{ matrix.mono }} `./vcpkg/vcpkg fetch nuget | tail -n 1`
+        sources add
+        -source "https://nuget.pkg.github.com/lerppana/index.json"
+        -storepasswordincleartext
+        -name "GitHub"
+        -username "lerppana"
+        -password "${{ inputs.PAT }}"
+
+    - name: 'setup nuget apikey'
+      shell: 'bash'
+      run: >
+        `./vcpkg/vcpkg fetch nuget | tail -n 1`
+        setapikey "${{ inputs.PAT }}" -Source "https://nuget.pkg.github.com/lerppana/index.json"
+
+    - name: save build output
+      uses: actions/upload-artifact@v2
+      with:
+        name: windows-output
+        path: ${{ github.workspace }}/install/bin
+        retention-days: 2
+
+    - name: collect build logs
+      if: always()
+      uses: actions/upload-artifact@v2
+      with:
+        name: windows-build-logs
+        path: |
+          ${{ env.buildDir }}/**/*.log
+          ${{ github.workspace }}/vcpkg/buildtrees/**/*.log
+          ${{ github.workspace }}/build/**/*.log
+        retention-days: 2
