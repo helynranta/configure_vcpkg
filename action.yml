@@ -61,21 +61,3 @@ runs:
       run: >
         `./vcpkg/vcpkg fetch nuget | tail -n 1`
         setapikey "${{ inputs.PAT }}" -Source "https://nuget.pkg.github.com/lerppana/index.json"
-
-    - name: save build output
-      uses: actions/upload-artifact@v2
-      with:
-        name: windows-output
-        path: ${{ github.workspace }}/install/bin
-        retention-days: 2
-
-    - name: collect build logs
-      if: always()
-      uses: actions/upload-artifact@v2
-      with:
-        name: windows-build-logs
-        path: |
-          ${{ env.buildDir }}/**/*.log
-          ${{ github.workspace }}/vcpkg/buildtrees/**/*.log
-          ${{ github.workspace }}/build/**/*.log
-        retention-days: 2
