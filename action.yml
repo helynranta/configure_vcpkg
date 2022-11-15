@@ -4,15 +4,18 @@ inputs:
   PAT:
     description: 'personal access token for accessing private repos'
     required: true
-env:
-  VCPKG_BINARY_SOURCES: 'clear;nuget,GitHub,readwrite'
-  VCPKG_NUGET_REPOSITORY: 'https://github.com/lerppana/vcpkg-registry.git'
-  VCPKG_KEEP_ENV_VARS: GITHUB_AUTHORIZATION_TOKEN;BLENDER_ROOT
-  VCPKG_FEATURE_FLAGS: manifests,versions,registries
-  VCPKG_MANIFEST_NO_DEFAULT_FEATURES: OFF
 runs:
   using: 'composite'
   steps:
+
+    - name: 'setup environment'
+      shell: 'bash'
+      run: |
+        echo "VCPKG_BINARY_SOURCES=clear;nuget,GitHub,readwrite" >> $GITHUB_ENV
+        echo "VCPKG_NUGET_REPOSITORY=https://github.com/lerppana/vcpkg-registry.git" >> $GITHUB_ENV
+        echo "VCPKG_KEEP_ENV_VARS=GITHUB_AUTHORIZATION_TOKEN;BLENDER_ROOT" >> $GITHUB_ENV
+        echo "VCPKG_FEATURE_FLAGS=manifests,versions,registries" >> $GITHUB_ENV
+
     - uses: actions/checkout@v3
       name: pull vcpkg
       with:
