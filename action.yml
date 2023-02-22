@@ -20,7 +20,7 @@ runs:
       name: pull vcpkg
       with:
         repository: 'microsoft/vcpkg'
-        ref: '2023.01.09'
+        ref: '1bd985963f49e3ceaddef4c780916e6572c44c69'
         path: 'vcpkg'
 
     - name: cache vcpkg downloads.
